@@ -2,6 +2,8 @@ import { useAuthStore } from '../store/authStore'
 import { TIER_LIMITS } from '../lib/stripe'
 import type { PricingTierId } from '../lib/stripe'
 
+// NOTE: trial has rank 3 (same as elite) — this is intentional.
+// During the free trial period, users get full Elite-level access.
 const TIER_RANK: Record<PricingTierId, number> = {
   trial: 3,
   starter: 1,
@@ -12,7 +14,8 @@ const TIER_RANK: Record<PricingTierId, number> = {
 export function useSubscription() {
   const { subscription } = useAuthStore()
 
-  const tier: PricingTierId = subscription?.tier ?? 'starter'
+  // Default to 'trial' (not 'starter') for new/unloaded users
+  const tier: PricingTierId = subscription?.tier ?? 'trial'
   const isActive =
     subscription?.status === 'active' ||
     subscription?.status === 'trialing'

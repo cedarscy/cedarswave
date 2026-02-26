@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useAuthStore } from '../store/authStore'
+import { logout } from '../lib/auth'
 import { useSubscription } from '../hooks/useSubscription'
 
 interface Props {
@@ -15,7 +16,7 @@ const NAV_ITEMS = [
 ]
 
 export function Layout({ children }: Props) {
-  const { user, logout } = useAuth()
+  const { user } = useAuthStore()
   const { tier, isTrial, getDaysRemaining } = useSubscription()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)

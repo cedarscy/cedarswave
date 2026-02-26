@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useScanner } from '../../hooks/useScanner'
 import { CoinCard } from './CoinCard'
 import { AddPairInput } from './AddPairInput'
@@ -244,12 +245,12 @@ export function ScannerGrid() {
             <p className="text-[#e0e6f0] text-sm mt-2">
               Pre-fill: <b>${tradeModal.price.toFixed(4)}</b> · Score: <b>{tradeModal.score}/10</b>
             </p>
-            <a
-              href="/journal"
+            <Link
+              to="/journal"
               className="btn-primary block text-center mt-4 no-underline"
             >
               Go to Journal →
-            </a>
+            </Link>
           </div>
         </div>
       )}

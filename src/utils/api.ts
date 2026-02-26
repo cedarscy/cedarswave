@@ -23,10 +23,11 @@ export function normalizeSymbol(raw: string): { sym: string; display: string; ty
 async function fetchBinanceKlines(
   sym: string,
   interval: string,
-  limit: number
+  limit: number,
+  signal?: AbortSignal
 ): Promise<(string | number)[][]> {
   const url = `${BINANCE_BASE}/fapi/v1/klines?symbol=${sym}&interval=${interval}&limit=${limit}`
-  const r = await fetch(url)
+  const r = await fetch(url, { signal })
   if (!r.ok) throw new Error(`Binance error: ${r.status}`)
   return r.json()
 }
@@ -34,7 +35,8 @@ async function fetchBinanceKlines(
 async function fetchYahooKlines(
   sym: string,
   interval: string,
-  limit: number
+  limit: number,
+  signal?: AbortSignal
 ): Promise<(string | number)[][]> {
   const yInterval =
     interval === '5m' ? '5m'
@@ -46,7 +48,7 @@ async function fetchYahooKlines(
     `${YAHOO_BASE}/${sym}?interval=${yInterval}&range=${yRange}&includePrePost=false`
   )}`
 
-  const r = await fetch(url, { headers: { Accept: 'application/json' } })
+  const r = await fetch(url, { headers: { Accept: 'application/json' }, signal })
   if (!r.ok) throw new Error(`Yahoo error: ${r.status}`)
   const json = await r.json()
   const result = json?.chart?.result?.[0]
@@ -75,10 +77,11 @@ export async function fetchKlines(
   sym: string,
   type: AssetType,
   interval: string,
-  limit: number
+  limit: number,
+  signal?: AbortSignal
 ): Promise<(string | number)[][]> {
   if (type === 'crypto') {
-    return fetchBinanceKlines(sym, interval, limit)
+    return fetchBinanceKlines(sym, interval, limit, signal)
   }
-  return fetchYahooKlines(sym, interval, limit)
+  return fetchYahooKlines(sym, interval, limit, signal)
 }

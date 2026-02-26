@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { login, resetPassword, signInWithGoogle, signInWithGithub } from '../lib/auth'
 
 export function Login() {
-  const { login, signInWithGoogle, signInWithGithub } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
 
   const from = (location.state as any)?.from?.pathname || '/dashboard'
 
@@ -24,6 +25,23 @@ export function Login() {
       setError(err.message || 'Login failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError('Enter your email address first, then click Forgot password.')
+      return
+    }
+    setResetLoading(true)
+    setError('')
+    try {
+      await resetPassword(email)
+      setResetSent(true)
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -88,7 +106,21 @@ export function Login() {
                 required
                 autoComplete="current-password"
               />
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="text-[#4fc3f7] text-xs mt-1.5 hover:underline bg-transparent border-none cursor-pointer p-0 disabled:opacity-50"
+              >
+                {resetLoading ? 'Sending...' : 'Forgot password?'}
+              </button>
             </div>
+
+            {resetSent && (
+              <div className="bg-[#003300] border border-[#2e7d32] text-[#69f0ae] text-sm rounded-lg px-3 py-2">
+                Check your email for a reset link
+              </div>
+            )}
 
             {error && (
               <div className="bg-[#3a0000] border border-[#c62828] text-[#ef9a9a] text-sm rounded-lg px-3 py-2">

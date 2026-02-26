@@ -3,6 +3,8 @@ import { PRICING_TIERS, STRIPE_PRICE_IDS, stripePromise } from '../../lib/stripe
 import { useSubscription } from '../../hooks/useSubscription'
 import { useAuthStore } from '../../store/authStore'
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+
 export function PricingCards() {
   const [annual, setAnnual] = useState(false)
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
@@ -21,13 +23,29 @@ export function PricingCards() {
       const billing = annual ? 'annual' : 'monthly'
       const priceKey = `${planId}_${billing}` as keyof typeof STRIPE_PRICE_IDS
       const priceId = STRIPE_PRICE_IDS[priceKey]
-      const { error } = await stripe.redirectToCheckout({
-        lineItems: [{ price: priceId, quantity: 1 }],
-        mode: 'subscription',
-        successUrl: `${window.location.origin}/dashboard?upgraded=true`,
-        cancelUrl: `${window.location.origin}/pricing`,
-        customerEmail: user.email,
+
+      // Create server-side checkout session
+      const { data: { session } } = await import('../../lib/supabase').then((m) => m.supabase.auth.getSession())
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          priceId,
+          userId: user.id,
+          userEmail: user.email,
+        }),
       })
+
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`Failed to create checkout session: ${errText}`)
+      }
+
+      const { sessionId } = await response.json()
+      const { error } = await stripe.redirectToCheckout({ sessionId })
       if (error) throw error
     } catch (err) {
       console.error('Checkout error:', err)

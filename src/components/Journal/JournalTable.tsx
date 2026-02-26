@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import { TradeForm } from './TradeForm'
@@ -22,6 +23,7 @@ export function JournalTable() {
   const { canUseJournal, limits } = useSubscription()
   const [trades, setTrades] = useState<Trade[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
@@ -31,20 +33,32 @@ export function JournalTable() {
   async function loadTrades() {
     if (!user) return
     setLoading(true)
-    const { data } = await supabase
-      .from('trade_journal')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(500)
-    setTrades(data as Trade[] ?? [])
-    setLoading(false)
+    setError(null)
+    try {
+      const { data, error: dbError } = await supabase
+        .from('trade_journal')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(500)
+      if (dbError) throw dbError
+      setTrades(data as Trade[] ?? [])
+    } catch (err: any) {
+      setError(err.message || 'Failed to load trades')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function deleteTrade(id: string) {
     if (!confirm('Delete this trade?')) return
-    await supabase.from('trade_journal').delete().eq('id', id)
-    setTrades((prev) => prev.filter((t) => t.id !== id))
+    try {
+      const { error: dbError } = await supabase.from('trade_journal').delete().eq('id', id)
+      if (dbError) throw dbError
+      setTrades((prev) => prev.filter((t) => t.id !== id))
+    } catch (err: any) {
+      alert('Failed to delete trade: ' + (err.message || 'Unknown error'))
+    }
   }
 
   function exportCSV() {
@@ -92,11 +106,20 @@ export function JournalTable() {
             </button>
           ) : (
             <span className="text-[#ffd740] text-xs self-center">
-              Limit: {limits.maxJournalEntries} entries. <a href="/pricing" className="underline text-[#4fc3f7]">Upgrade</a>
+              Limit: {limits.maxJournalEntries} entries.{' '}
+              <Link to="/pricing" className="underline text-[#4fc3f7]">Upgrade</Link>
             </span>
           )}
         </div>
       </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="bg-[#3a0000] border border-[#c62828] text-[#ef9a9a] text-sm rounded-lg px-3 py-2 mb-4">
+          {error}
+          <button onClick={loadTrades} className="ml-2 underline text-[#ef9a9a]">Retry</button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="flex gap-3 mb-4 flex-wrap">

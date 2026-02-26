@@ -36,7 +36,7 @@ export function useScanner() {
     for (const rawSym of symbols) {
       try {
         const { sym, type } = normalizeSymbol(rawSym)
-        const klines = await fetchKlines(sym, type, settings.interval, settings.limit)
+        const klines = await fetchKlines(sym, type, settings.interval, settings.limit, abortRef.current?.signal)
         if (!klines || klines.length < 30) continue
         const result = scoreSignal(rawSym, type, klines)
         scanResults.push(result)

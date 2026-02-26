@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { Link } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
 import { useSubscription } from '../hooks/useSubscription'
 import { useScannerStore } from '../store/scannerStore'
+import { logout } from '../lib/auth'
 
 export function Settings() {
-  const { user, logout } = useAuth()
+  const { user } = useAuthStore()
   const { tier, subscription, getDaysRemaining } = useSubscription()
   const { symbols, settings, setSymbols, updateSettings } = useScannerStore()
   const [symbolsText, setSymbolsText] = useState(symbols.join(', '))
@@ -63,9 +65,9 @@ export function Settings() {
 
         {tier !== 'elite' && (
           <div className="mt-3">
-            <a href="/pricing" className="btn-primary text-xs py-1.5 px-3 inline-block no-underline">
+            <Link to="/pricing" className="btn-primary text-xs py-1.5 px-3 inline-block no-underline">
               Upgrade Plan →
-            </a>
+            </Link>
           </div>
         )}
       </div>
@@ -134,9 +136,9 @@ export function Settings() {
         <p className="text-[#607d9b] text-sm mb-3">
           Manage API keys for programmatic access to the Cedars Wave scanner.
         </p>
-        <a href="/settings/api-keys" className="btn-primary text-sm py-1.5 px-3 inline-block no-underline">
+        <Link to="/settings/api-keys" className="btn-primary text-sm py-1.5 px-3 inline-block no-underline">
           Manage API Keys
-        </a>
+        </Link>
       </div>
 
       {/* Danger zone */}

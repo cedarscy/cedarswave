@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { signup, signInWithGoogle, signInWithGithub } from '../lib/auth'
 
 export function Signup() {
-  const { signup, signInWithGoogle, signInWithGithub } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const [confirmEmail, setConfirmEmail] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -25,9 +24,14 @@ export function Signup() {
     }
     setLoading(true)
     try {
-      await signup(email, password)
-      setSuccess(true)
-      setTimeout(() => navigate('/dashboard'), 2000)
+      const data = await signup(email, password)
+      if (!data.session) {
+        // Email confirmation required
+        setConfirmEmail(true)
+      } else {
+        // Email confirmation disabled — go straight to dashboard
+        navigate('/dashboard')
+      }
     } catch (err: any) {
       setError(err.message || 'Signup failed')
     } finally {
@@ -35,15 +39,18 @@ export function Signup() {
     }
   }
 
-  if (success) {
+  if (confirmEmail) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-primary)' }}>
         <div className="text-center">
-          <div className="text-5xl mb-4">🎉</div>
+          <div className="text-5xl mb-4">📧</div>
           <h2 className="text-2xl font-bold text-[#e0e6f0] mb-2" style={{ fontFamily: 'Space Grotesk' }}>
-            Welcome aboard!
+            Check your email
           </h2>
-          <p className="text-[#607d9b]">Your 14-day free trial has started. Redirecting to dashboard...</p>
+          <p className="text-[#607d9b]">Please check your email to confirm your account.</p>
+          <Link to="/login" className="text-[#4fc3f7] hover:underline text-sm mt-4 inline-block">
+            Back to login
+          </Link>
         </div>
       </div>
     )

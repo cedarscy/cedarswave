@@ -12,9 +12,9 @@ export type AuthResult =
 export async function resolveAuth(apiKey?: string | null): Promise<AuthResult> {
   // 1. Try API key first if provided
   if (apiKey) {
-    const userId = await validateApiKey(apiKey)
-    if (userId) {
-      return { authenticated: true, userId, method: 'api_key' }
+    const result = await validateApiKey(apiKey)
+    if (result.valid && result.userId) {
+      return { authenticated: true, userId: result.userId, method: 'api_key' }
     }
     return { authenticated: false, error: 'Invalid API key' }
   }
