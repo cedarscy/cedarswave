@@ -8,6 +8,7 @@ import { Signup } from './pages/Signup'
 import { Dashboard } from './pages/Dashboard'
 import { Journal } from './pages/Journal'
 import { Settings } from './pages/Settings'
+import { ApiKeys } from './pages/ApiKeys'
 import { Pricing } from './pages/Pricing'
 
 export function App() {
@@ -48,6 +49,16 @@ export function App() {
           <ProtectedRoute>
             <Layout>
               <Settings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/api-keys"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ApiKeys />
             </Layout>
           </ProtectedRoute>
         }

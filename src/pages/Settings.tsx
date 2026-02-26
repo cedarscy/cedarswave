@@ -126,6 +126,19 @@ export function Settings() {
         </div>
       </div>
 
+      {/* API Keys */}
+      <div className="card p-5 mb-4">
+        <h2 className="text-[#4fc3f7] font-semibold mb-3" style={{ fontFamily: 'Space Grotesk' }}>
+          API Access
+        </h2>
+        <p className="text-[#607d9b] text-sm mb-3">
+          Manage API keys for programmatic access to the Cedars Wave scanner.
+        </p>
+        <a href="/settings/api-keys" className="btn-primary text-sm py-1.5 px-3 inline-block no-underline">
+          Manage API Keys
+        </a>
+      </div>
+
       {/* Danger zone */}
       <div className="card p-5 border-[#c62828]">
         <h2 className="text-[#ef5350] font-semibold mb-4" style={{ fontFamily: 'Space Grotesk' }}>

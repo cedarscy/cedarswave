@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', icon: '📡', label: 'Scanner' },
   { to: '/journal', icon: '📝', label: 'Journal' },
   { to: '/settings', icon: '⚙️', label: 'Settings' },
+  { to: '/settings/api-keys', icon: '🔑', label: 'API Keys' },
 ]
 
 export function Layout({ children }: Props) {
@@ -77,6 +78,7 @@ export function Layout({ children }: Props) {
             <NavLink
               key={item.to}
               to={item.to}
+              end
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-colors no-underline ${

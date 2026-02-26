@@ -63,6 +63,18 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['user_settings']['Row'], 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['user_settings']['Insert']>
       }
+      api_keys: {
+        Row: {
+          id: string
+          user_id: string
+          key: string
+          name: string
+          created_at: string
+          last_used_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['api_keys']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['api_keys']['Insert']>
+      }
     }
   }
 }
