@@ -41,7 +41,7 @@ const FEATURES = [
   {
     icon: '🔑',
     title: 'Full API Access',
-    desc: 'Every feature available via REST API with API key auth. Connect any tool, any agent, any workflow. CedarsWave is your trading brain — let AI do the work.',
+    desc: 'REST API with X-API-Key authentication — available on the Elite plan. Connect OpenClaw, Zapier, or any tool to automate your trading workflow.',
   },
 ]
 
@@ -273,7 +273,7 @@ export function Landing() {
                 Agent-Ready API
               </h3>
               <p className="text-[#607d9b] text-sm leading-relaxed">
-                Your OpenClaw agent can query signals, get scored setups, and export data 24/7 via REST API with X-API-Key auth.
+                Elite subscribers get a personal API key. Your OpenClaw agent can query signals, get scored setups, and export data 24/7 automatically.
               </p>
             </div>
             <div className="card p-5 hover:border-[#4fc3f7] transition-colors">
