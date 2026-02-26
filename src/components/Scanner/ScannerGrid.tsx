@@ -26,6 +26,7 @@ export function ScannerGrid() {
 
   const [countdown, setCountdown] = useState(settings.refreshInterval)
   const [tradeModal, setTradeModal] = useState<TradeModalData | null>(null)
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'long' | 'short'>('all')
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Auto-refresh
@@ -106,6 +107,28 @@ export function ScannerGrid() {
 
         <div className="h-5 w-px bg-[#1e3050]" />
 
+        <div className="flex items-center gap-1">
+          {(['all', 'long', 'short'] as const).map((dir) => (
+            <button
+              key={dir}
+              onClick={() => setDirectionFilter(dir)}
+              className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                directionFilter === dir
+                  ? dir === 'long'
+                    ? 'bg-[#00c853]/20 text-[#00e676] border-[#00c853]/40'
+                    : dir === 'short'
+                      ? 'bg-[#ff1744]/20 text-[#ff5252] border-[#ff1744]/40'
+                      : 'bg-[#4fc3f7]/20 text-[#4fc3f7] border-[#4fc3f7]/40'
+                  : 'bg-transparent text-[#546e7a] border-[#1e3050] hover:text-[#90a4ae]'
+              }`}
+            >
+              {dir === 'all' ? 'All' : dir === 'long' ? '▲ Long' : '▼ Short'}
+            </button>
+          ))}
+        </div>
+
+        <div className="h-5 w-px bg-[#1e3050]" />
+
         <AddPairInput />
 
         <div className="ml-auto text-[11px] text-[#546e7a]">
@@ -127,9 +150,14 @@ export function ScannerGrid() {
           <span className="px-2 py-0.5 rounded-full font-bold grade-valid">✅ VALID: {summary.valid}</span>
           <span className="px-2 py-0.5 rounded-full font-bold grade-weak">⚠️ WEAK: {summary.weak}</span>
           <span className="px-2 py-0.5 rounded-full font-bold grade-skip">❌ SKIP: {summary.skip}</span>
+          <div className="h-4 w-px bg-[#1e3050]" />
+          <span className="px-2 py-0.5 rounded-full font-bold bg-[#00c853]/15 text-[#00e676]">▲ Long Strong: {summary.longStrong}</span>
+          <span className="px-2 py-0.5 rounded-full font-bold bg-[#00c853]/10 text-[#69f0ae]">▲ Long Valid: {summary.longValid}</span>
+          <span className="px-2 py-0.5 rounded-full font-bold bg-[#ff1744]/15 text-[#ff5252]">▼ Short Strong: {summary.shortStrong}</span>
+          <span className="px-2 py-0.5 rounded-full font-bold bg-[#ff1744]/10 text-[#ff8a80]">▼ Short Valid: {summary.shortValid}</span>
           {summary.best && (
             <span className="ml-2 text-[#607d9b]">
-              Best: <b className="text-[#e0e6f0]">{summary.best.display.replace('USDT', '')}</b> {summary.best.score}/10 · RSI {summary.best.rsiNow}
+              Best: <b className="text-[#e0e6f0]">{summary.best.display.replace('USDT', '')}</b> {summary.best.direction === 'short' ? '▼' : '▲'} {summary.best.score}/10 · RSI {summary.best.rsiNow}
             </span>
           )}
         </div>
@@ -163,10 +191,10 @@ export function ScannerGrid() {
 
       {/* Cards grid */}
       <div className="p-4 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))' }}>
-        {results.length === 0 && !scanning && (
+        {results.filter((r) => directionFilter === 'all' || r.direction === directionFilter).length === 0 && !scanning && (
           <div className="col-span-full text-center py-16">
             <div className="text-4xl mb-3">🔍</div>
-            <p className="text-[#607d9b]">No setups found with score ≥ {settings.minScore}.</p>
+            <p className="text-[#607d9b]">No setups found with score ≥ {settings.minScore}{directionFilter !== 'all' ? ` (${directionFilter})` : ''}.</p>
             <p className="text-[#546e7a] text-sm mt-1">Lower the filter or click Refresh.</p>
           </div>
         )}
@@ -176,7 +204,7 @@ export function ScannerGrid() {
             <p className="text-[#607d9b]">Scanning markets...</p>
           </div>
         )}
-        {results.map((result) => (
+        {results.filter((r) => directionFilter === 'all' || r.direction === directionFilter).map((result) => (
           <div key={result.sym} id={`card-${result.sym}`}>
             <CoinCard
               data={result}

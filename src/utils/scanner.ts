@@ -9,7 +9,10 @@ export interface ScanResult {
   sym: string
   display: string
   type: 'crypto' | 'forex' | 'stock'
+  direction: 'long' | 'short'
   score: number
+  longScore: number
+  shortScore: number
   grade: string
   gradeClass: 'fire' | 'valid' | 'weak' | 'skip'
   sigs: Signal[]
@@ -127,7 +130,16 @@ export function countConsecutiveGreen(klines: (string | number)[][]): number {
   return count
 }
 
-// ── 10-Signal Scoring System ──
+export function countConsecutiveRed(klines: (string | number)[][]): number {
+  let count = 0
+  for (let i = klines.length - 1; i >= 0; i--) {
+    if (parseFloat(String(klines[i][4])) < parseFloat(String(klines[i][1]))) count++
+    else break
+  }
+  return count
+}
+
+// ── 10-Signal Scoring System (Long + Short) ──
 
 export function scoreSignal(
   symRaw: string,
@@ -166,102 +178,104 @@ export function scoreSignal(
 
   // ATR
   const atr = calcATR(klines)
-  const atrStop = (price - 2 * atr).toFixed(4)
   const atrPct = price > 0 ? (atr / price * 100).toFixed(2) : '0'
   const atrRR = atr > 0 ? (price * 0.03) / (2 * atr) : 0
 
   // VWAP
   const vwap = calcVWAP(klines)
 
-  // Consecutive green candles
+  // Consecutive candle runs
   const greenCount = countConsecutiveGreen(klines)
+  const redCount = countConsecutiveRed(klines)
 
-  let score = 0
-  const sigs: Signal[] = []
+  // ── LONG score (6 core signals) ──
+  let longScore = 0
+  const longSigs: Signal[] = []
 
-  // Signal 1: EMA Stack (EMA9 > EMA21 > EMA50)
-  if (e9 > e21 && e21 > e50) {
-    score++
-    sigs.push({ label: 'EMA9>21>50', ok: true })
-  } else {
-    sigs.push({ label: 'EMA Stack', ok: false })
-  }
+  // L1: Bullish EMA Stack
+  if (e9 > e21 && e21 > e50) { longScore++; longSigs.push({ label: 'EMA9>21>50', ok: true }) }
+  else { longSigs.push({ label: 'EMA Stack', ok: false }) }
 
-  // Signal 2: RSI Zone (50-80)
-  if (rsiNow >= 50 && rsiNow <= 80) {
-    score++
-    sigs.push({ label: `RSI ${rsiNow} ✓`, ok: true })
-  } else if (rsiNow > 80) {
-    sigs.push({ label: `RSI ${rsiNow} ⚠`, ok: 'warn' })
-  } else {
-    sigs.push({ label: `RSI ${rsiNow}`, ok: false })
-  }
+  // L2: RSI 50-80
+  if (rsiNow >= 50 && rsiNow <= 80) { longScore++; longSigs.push({ label: `RSI ${rsiNow} ✓`, ok: true }) }
+  else if (rsiNow > 80) { longSigs.push({ label: `RSI ${rsiNow} ⚠`, ok: 'warn' }) }
+  else { longSigs.push({ label: `RSI ${rsiNow}`, ok: false }) }
 
-  // Signal 3: RSI Direction (rising)
-  if (rsiRising) {
-    score++
-    sigs.push({ label: 'RSI↑ Rising', ok: true })
-  } else {
-    sigs.push({ label: 'RSI↓ Falling', ok: false })
-  }
+  // L3: RSI Rising
+  if (rsiRising) { longScore++; longSigs.push({ label: 'RSI↑ Rising', ok: true }) }
+  else { longSigs.push({ label: 'RSI↓ Falling', ok: false }) }
 
-  // Signal 4: Volume Surge (>1.3x avg)
-  if (parseFloat(volRatio) >= 1.3) {
-    score++
-    sigs.push({ label: `Vol ${volRatio}×`, ok: true })
-  } else {
-    sigs.push({ label: `Vol ${volRatio}×`, ok: false })
-  }
+  // L4: Volume Surge
+  if (parseFloat(volRatio) >= 1.3) { longScore++; longSigs.push({ label: `Vol ${volRatio}×`, ok: true }) }
+  else { longSigs.push({ label: `Vol ${volRatio}×`, ok: false }) }
 
-  // Signal 5: 1H Trend (EMA9 > EMA21)
-  if (e9 > e21) {
-    score++
-    sigs.push({ label: 'Trend BULL', ok: true })
-  } else {
-    sigs.push({ label: 'Trend BEAR', ok: false })
-  }
+  // L5: Bullish Trend
+  if (e9 > e21) { longScore++; longSigs.push({ label: 'Trend BULL', ok: true }) }
+  else { longSigs.push({ label: 'Trend BEAR', ok: false }) }
 
-  // Signal 6: MACD Positive
-  if (macd > 0) {
-    score++
-    sigs.push({ label: 'MACD+', ok: true })
-  } else {
-    sigs.push({ label: 'MACD−', ok: false })
-  }
+  // L6: MACD Positive
+  if (macd > 0) { longScore++; longSigs.push({ label: 'MACD+', ok: true }) }
+  else { longSigs.push({ label: 'MACD−', ok: false }) }
 
-  // Signal 7: Bollinger Band position (near lower = bullish oversold)
-  if (bbPos < 0.35) {
-    score++
-    sigs.push({ label: `BB Lower (${(bbPos * 100).toFixed(0)}%)`, ok: true })
-  } else if (bbPos > 0.8) {
-    sigs.push({ label: `BB Upper (${(bbPos * 100).toFixed(0)}%)`, ok: 'warn' })
-  } else {
-    sigs.push({ label: `BB Mid (${(bbPos * 100).toFixed(0)}%)`, ok: false })
-  }
+  // ── SHORT score (6 mirrored signals) ──
+  let shortScore = 0
+  const shortSigs: Signal[] = []
 
-  // Signal 8: ATR R:R quality
-  if (atrRR >= 1.0) {
-    score++
-    sigs.push({ label: 'ATR RR ≥1:1', ok: true })
-  } else {
-    sigs.push({ label: 'ATR RR <1:1', ok: false })
-  }
+  // S1: Bearish EMA Stack (e9 < e21 < e50)
+  if (e9 < e21 && e21 < e50) { shortScore++; shortSigs.push({ label: 'EMA9<21<50', ok: true }) }
+  else { shortSigs.push({ label: 'EMA Stack', ok: false }) }
 
-  // Signal 9: Price vs VWAP
-  if (vwap > 0 && price > vwap) {
-    score++
-    sigs.push({ label: 'Above VWAP', ok: true })
-  } else {
-    sigs.push({ label: 'Below VWAP', ok: false })
-  }
+  // S2: RSI 20-50
+  if (rsiNow >= 20 && rsiNow <= 50) { shortScore++; shortSigs.push({ label: `RSI ${rsiNow} ✓`, ok: true }) }
+  else if (rsiNow < 20) { shortSigs.push({ label: `RSI ${rsiNow} ⚠`, ok: 'warn' }) }
+  else { shortSigs.push({ label: `RSI ${rsiNow}`, ok: false }) }
 
-  // Signal 10: Consecutive green candles (3+)
-  if (greenCount >= 3) {
-    score++
-    sigs.push({ label: `${greenCount} Green Candles`, ok: true })
-  } else {
-    sigs.push({ label: greenCount === 0 ? 'No Green Run' : `${greenCount} Green`, ok: false })
-  }
+  // S3: RSI Falling
+  if (!rsiRising) { shortScore++; shortSigs.push({ label: 'RSI↓ Falling', ok: true }) }
+  else { shortSigs.push({ label: 'RSI↑ Rising', ok: false }) }
+
+  // S4: Volume Surge (same threshold)
+  if (parseFloat(volRatio) >= 1.3) { shortScore++; shortSigs.push({ label: `Vol ${volRatio}×`, ok: true }) }
+  else { shortSigs.push({ label: `Vol ${volRatio}×`, ok: false }) }
+
+  // S5: Bearish Trend (e9 < e21)
+  if (e9 < e21) { shortScore++; shortSigs.push({ label: 'Trend BEAR', ok: true }) }
+  else { shortSigs.push({ label: 'Trend BULL', ok: false }) }
+
+  // S6: MACD Negative
+  if (macd < 0) { shortScore++; shortSigs.push({ label: 'MACD−', ok: true }) }
+  else { shortSigs.push({ label: 'MACD+', ok: false }) }
+
+  // ── Shared signals (4) applied to both sides ──
+  // Signal 7: BB position
+  const bbLongOk = bbPos < 0.35
+  const bbShortOk = bbPos > 0.65
+  if (bbLongOk) longScore++
+  if (bbShortOk) shortScore++
+longSigs.push({ label: bbPos < 0.35 ? `BB Lower (${(bbPos * 100).toFixed(0)}%)` : bbPos > 0.8 ? `BB Upper (${(bbPos * 100).toFixed(0)}%)` : `BB Mid (${(bbPos * 100).toFixed(0)}%)`, ok: bbLongOk ? true : bbPos > 0.8 ? 'warn' : false })
+  shortSigs.push({ label: bbPos > 0.65 ? `BB Upper (${(bbPos * 100).toFixed(0)}%)` : bbPos < 0.2 ? `BB Lower (${(bbPos * 100).toFixed(0)}%)` : `BB Mid (${(bbPos * 100).toFixed(0)}%)`, ok: bbShortOk ? true : bbPos < 0.2 ? 'warn' : false })
+
+  // Signal 8: ATR R:R
+  if (atrRR >= 1.0) { longScore++; shortScore++ }
+  longSigs.push({ label: atrRR >= 1.0 ? 'ATR RR ≥1:1' : 'ATR RR <1:1', ok: atrRR >= 1.0 })
+  shortSigs.push({ label: atrRR >= 1.0 ? 'ATR RR ≥1:1' : 'ATR RR <1:1', ok: atrRR >= 1.0 })
+
+  // Signal 9: VWAP (long = above, short = below)
+  if (vwap > 0 && price > vwap) { longScore++ }
+  if (vwap > 0 && price < vwap) { shortScore++ }
+  longSigs.push({ label: price > vwap ? 'Above VWAP' : 'Below VWAP', ok: vwap > 0 && price > vwap })
+  shortSigs.push({ label: price < vwap ? 'Below VWAP' : 'Above VWAP', ok: vwap > 0 && price < vwap })
+
+  // Signal 10: Candle runs (long = green, short = red)
+  if (greenCount >= 3) longScore++
+  if (redCount >= 3) shortScore++
+  longSigs.push({ label: greenCount >= 3 ? `${greenCount} Green Candles` : greenCount === 0 ? 'No Green Run' : `${greenCount} Green`, ok: greenCount >= 3 })
+  shortSigs.push({ label: redCount >= 3 ? `${redCount} Red Candles` : redCount === 0 ? 'No Red Run' : `${redCount} Red`, ok: redCount >= 3 })
+
+  // ── Pick dominant direction ──
+  const direction: 'long' | 'short' = longScore >= shortScore ? 'long' : 'short'
+  const score = direction === 'long' ? longScore : shortScore
+  const sigs = direction === 'long' ? longSigs : shortSigs
 
   // Grade
   let grade: string
@@ -271,16 +285,30 @@ export function scoreSignal(
   else if (score >= 4) { grade = '⚠️ WEAK'; gradeClass = 'weak' }
   else { grade = '❌ SKIP'; gradeClass = 'skip' }
 
-  const tp3 = (price * 1.03).toFixed(4)
-  const tp5 = (price * 1.05).toFixed(4)
-  const entryLimit = e9.toFixed(4)
-  const stop = e21.toFixed(4)
+  // TP / Stop depend on direction
+  let tp3: string, tp5: string, entryLimit: string, stop: string, atrStop: string
+  if (direction === 'long') {
+    tp3 = (price * 1.03).toFixed(4)
+    tp5 = (price * 1.05).toFixed(4)
+    entryLimit = e9.toFixed(4)
+    stop = e21.toFixed(4)
+    atrStop = (price - 2 * atr).toFixed(4)
+  } else {
+    tp3 = (price * 0.97).toFixed(4)
+    tp5 = (price * 0.95).toFixed(4)
+    entryLimit = e9.toFixed(4)
+    stop = e21.toFixed(4)
+    atrStop = (price + 2 * atr).toFixed(4)
+  }
 
   return {
     sym: symRaw,
     display,
     type,
+    direction,
     score,
+    longScore,
+    shortScore,
     grade,
     gradeClass,
     sigs,

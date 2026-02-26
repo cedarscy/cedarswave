@@ -196,6 +196,15 @@ export function CoinCard({ data, isFavorite, onToggleFavorite, onRemove, onLogTr
           <span className="font-bold text-[#e0e6f0] text-sm" style={{ fontFamily: 'Space Grotesk' }}>
             {data.display.replace('USDT', '')}
           </span>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              data.direction === 'long'
+                ? 'bg-[#00c853]/20 text-[#00e676] border border-[#00c853]/40'
+                : 'bg-[#ff1744]/20 text-[#ff5252] border border-[#ff1744]/40'
+            }`}
+          >
+            {data.direction === 'long' ? '▲ LONG' : '▼ SHORT'}
+          </span>
           <span className="text-[9px] text-[#546e7a] bg-[#0b1220] rounded px-1 py-0.5">{typeLabel}</span>
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full grade-${data.gradeClass}`}
@@ -239,11 +248,12 @@ export function CoinCard({ data, isFavorite, onToggleFavorite, onRemove, onLogTr
       {/* Entry info */}
       <div className="px-3 py-2 text-[11px] text-[#546e7a] border-t border-[#1a2d45] flex flex-wrap gap-x-3 gap-y-1">
         <span>📍 Limit: <b className="text-[#4fc3f7]">${data.entryLimit}</b></span>
-        <span>🎯 TP3: <b className="text-[#4fc3f7]">${data.tp3}</b></span>
-        <span>🎯 TP5: <b className="text-[#4fc3f7]">${data.tp5}</b></span>
-        <span>🛑 Stop: <b className="text-[#4fc3f7]">${data.stop}</b></span>
+        <span>🎯 TP3{data.direction === 'short' ? '↓' : '↑'}: <b className="text-[#4fc3f7]">${data.tp3}</b></span>
+        <span>🎯 TP5{data.direction === 'short' ? '↓' : '↑'}: <b className="text-[#4fc3f7]">${data.tp5}</b></span>
+        <span>{data.direction === 'short' ? '🛑 Stop↑' : '🛑 Stop'}: <b className="text-[#4fc3f7]">${data.stop}</b></span>
         <span>VWAP: <b className="text-[#4fc3f7]">${data.vwap}</b></span>
         <span>ATR: <b className="text-[#4fc3f7]">{data.atrPct}%</b></span>
+        <span className="text-[9px] text-[#546e7a]">L:{data.longScore} S:{data.shortScore}</span>
         <span className="ml-auto text-[9px] text-[#37474f]">🕐 {data.scanTime}</span>
       </div>
 

@@ -79,6 +79,10 @@ export function useScanner() {
     valid: results.filter((r) => r.score >= 6 && r.score < 8).length,
     weak: results.filter((r) => r.score >= 4 && r.score < 6).length,
     skip: results.filter((r) => r.score < 4).length,
+    longStrong: results.filter((r) => r.direction === 'long' && r.score >= 8).length,
+    longValid: results.filter((r) => r.direction === 'long' && r.score >= 6 && r.score < 8).length,
+    shortStrong: results.filter((r) => r.direction === 'short' && r.score >= 8).length,
+    shortValid: results.filter((r) => r.direction === 'short' && r.score >= 6 && r.score < 8).length,
     total: results.length,
     best: results[0] ?? null,
   }
