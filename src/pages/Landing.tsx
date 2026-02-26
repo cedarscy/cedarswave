@@ -33,6 +33,16 @@ const FEATURES = [
     title: 'Live Charts',
     desc: 'Candlestick charts with EMA overlays, Bollinger Bands, VWAP, and RSI sub-chart — all auto-rendered.',
   },
+  {
+    icon: '🤖',
+    title: 'OpenClaw Native',
+    desc: 'Built-in integration with OpenClaw AI. Your AI agent can scan markets, read signals, and trigger alerts automatically — no manual work needed.',
+  },
+  {
+    icon: '🔑',
+    title: 'Full API Access',
+    desc: 'Every feature available via REST API with API key auth. Connect any tool, any agent, any workflow. CedarsWave is your trading brain — let AI do the work.',
+  },
 ]
 
 const COMPARISON = [
@@ -237,6 +247,59 @@ export function Landing() {
                 <p className="text-[#607d9b] text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* OpenClaw AI Integration */}
+      <section className="py-20 px-6" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-[#e0e6f0] mb-3" style={{ fontFamily: 'Space Grotesk' }}>
+              🤖 Works With OpenClaw Natively
+            </h2>
+            <p className="text-[#607d9b] text-lg">
+              CedarsWave is the first wave scanner built for AI-first workflows
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="card p-5 hover:border-[#4fc3f7] transition-colors">
+              <div className="text-3xl mb-3">⚡</div>
+              <h3
+                className="text-[#e0e6f0] font-semibold mb-2"
+                style={{ fontFamily: 'Space Grotesk' }}
+              >
+                Agent-Ready API
+              </h3>
+              <p className="text-[#607d9b] text-sm leading-relaxed">
+                Your OpenClaw agent can query signals, get scored setups, and export data 24/7 via REST API with X-API-Key auth.
+              </p>
+            </div>
+            <div className="card p-5 hover:border-[#4fc3f7] transition-colors">
+              <div className="text-3xl mb-3">🔄</div>
+              <h3
+                className="text-[#e0e6f0] font-semibold mb-2"
+                style={{ fontFamily: 'Space Grotesk' }}
+              >
+                Automated Scanning
+              </h3>
+              <p className="text-[#607d9b] text-sm leading-relaxed">
+                Set up crons in OpenClaw to scan markets every hour and alert you only when strong setups appear.
+              </p>
+            </div>
+            <div className="card p-5 hover:border-[#4fc3f7] transition-colors">
+              <div className="text-3xl mb-3">✨</div>
+              <h3
+                className="text-[#e0e6f0] font-semibold mb-2"
+                style={{ fontFamily: 'Space Grotesk' }}
+              >
+                Zero Manual Work
+              </h3>
+              <p className="text-[#607d9b] text-sm leading-relaxed">
+                From signal detection to trade logging, OpenClaw handles it all. You just approve the trades.
+              </p>
+            </div>
           </div>
         </div>
       </section>
