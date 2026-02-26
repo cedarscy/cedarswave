@@ -9,12 +9,12 @@ if (!publishableKey) {
 export const stripePromise = loadStripe(publishableKey)
 
 export const STRIPE_PRICE_IDS = {
-  starter_monthly: 'price_starter_monthly',
-  starter_annual: 'price_starter_annual',
-  pro_monthly: 'price_pro_monthly',
-  pro_annual: 'price_pro_annual',
-  elite_monthly: 'price_elite_monthly',
-  elite_annual: 'price_elite_annual',
+  starter_monthly: 'price_1T4xqiCiyUV0aZA3pdfxOfDY',
+  starter_annual: 'price_1T4xqiCiyUV0aZA3RcFxjSaw',
+  pro_monthly: 'price_1T4xqjCiyUV0aZA37upBLgVW',
+  pro_annual: 'price_1T4xqjCiyUV0aZA3pdrzPUSP',
+  elite_monthly: 'price_1T4xqkCiyUV0aZA39viOEtJF',
+  elite_annual: 'price_1T4xqkCiyUV0aZA3jiiqEmic',
 } as const
 
 export const PRICING_TIERS = [

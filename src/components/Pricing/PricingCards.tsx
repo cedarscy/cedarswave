@@ -1,10 +1,41 @@
 import { useState } from 'react'
-import { PRICING_TIERS } from '../../lib/stripe'
+import { PRICING_TIERS, STRIPE_PRICE_IDS, stripePromise } from '../../lib/stripe'
 import { useSubscription } from '../../hooks/useSubscription'
+import { useAuthStore } from '../../store/authStore'
 
 export function PricingCards() {
   const [annual, setAnnual] = useState(false)
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const { tier: currentTier } = useSubscription()
+  const { user } = useAuthStore()
+
+  const handleUpgrade = async (planId: string) => {
+    if (!user) {
+      window.location.href = '/login'
+      return
+    }
+    setLoadingPlan(planId)
+    try {
+      const stripe = await stripePromise
+      if (!stripe) throw new Error('Stripe not loaded')
+      const billing = annual ? 'annual' : 'monthly'
+      const priceKey = `${planId}_${billing}` as keyof typeof STRIPE_PRICE_IDS
+      const priceId = STRIPE_PRICE_IDS[priceKey]
+      const { error } = await stripe.redirectToCheckout({
+        lineItems: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        successUrl: `${window.location.origin}/dashboard?upgraded=true`,
+        cancelUrl: `${window.location.origin}/pricing`,
+        customerEmail: user.email,
+      })
+      if (error) throw error
+    } catch (err) {
+      console.error('Checkout error:', err)
+      alert('Failed to start checkout. Please try again.')
+    } finally {
+      setLoadingPlan(null)
+    }
+  }
 
   return (
     <div>
@@ -83,11 +114,12 @@ export function PricingCards() {
               }`}
               onClick={() => {
                 if (currentTier !== plan.id) {
-                  window.location.href = `/checkout?plan=${plan.id}&billing=${annual ? 'annual' : 'monthly'}`
+                  handleUpgrade(plan.id)
                 }
               }}
+              disabled={loadingPlan === plan.id}
             >
-              {currentTier === plan.id ? '✓ Current Plan' : `Start ${plan.name}`}
+              {loadingPlan === plan.id ? 'Loading...' : currentTier === plan.id ? '✓ Current Plan' : `Start ${plan.name}`}
             </button>
           </div>
         ))}
