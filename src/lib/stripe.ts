@@ -17,6 +17,15 @@ export const STRIPE_PRICE_IDS = {
   elite_annual: 'price_1T4xqkCiyUV0aZA3jiiqEmic',
 } as const
 
+export const STRIPE_PAYMENT_LINKS = {
+  starter_monthly: 'https://buy.stripe.com/7sYfZggSD44kaxr8Vw4c803',
+  starter_annual:  'https://buy.stripe.com/6oU7sKbyj44k8pjfjU4c804',
+  pro_monthly:     'https://buy.stripe.com/aFa4gycCn58odJD6No4c805',
+  pro_annual:      'https://buy.stripe.com/28EbJ08m7bwM6hb0p04c802',
+  elite_monthly:   'https://buy.stripe.com/14AfZgeKv8kA0WR6No4c806',
+  elite_annual:    'https://buy.stripe.com/00w00i9qbgR6gVPb3E4c801',
+} as const
+
 export const PRICING_TIERS = [
   {
     id: 'starter',

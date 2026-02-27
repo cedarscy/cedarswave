@@ -1,56 +1,15 @@
 import { useState } from 'react'
-import { PRICING_TIERS, STRIPE_PRICE_IDS } from '../../lib/stripe'
+import { PRICING_TIERS, STRIPE_PAYMENT_LINKS } from '../../lib/stripe'
 import { useSubscription } from '../../hooks/useSubscription'
-import { useAuthStore } from '../../store/authStore'
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
 
 export function PricingCards() {
   const [annual, setAnnual] = useState(false)
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const { tier: currentTier } = useSubscription()
-  const { user } = useAuthStore()
 
-  const handleUpgrade = async (planId: string) => {
-    if (!user) {
-      window.location.href = '/login'
-      return
-    }
-    setLoadingPlan(planId)
-    try {
-      const billing = annual ? 'annual' : 'monthly'
-      const priceKey = `${planId}_${billing}` as keyof typeof STRIPE_PRICE_IDS
-      const priceId = STRIPE_PRICE_IDS[priceKey]
-
-      // Create server-side checkout session
-      const { data: { session } } = await import('../../lib/supabase').then((m) => m.supabase.auth.getSession())
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({
-          priceId,
-          userId: user.id,
-          userEmail: user.email,
-        }),
-      })
-
-      if (!response.ok) {
-        const errText = await response.text()
-        throw new Error(`Failed to create checkout session: ${errText}`)
-      }
-
-      const { sessionId } = await response.json()
-      // Redirect to Stripe hosted checkout
-      window.location.href = `https://checkout.stripe.com/pay/${sessionId}`
-    } catch (err) {
-      console.error('Checkout error:', err)
-      alert('Failed to start checkout. Please try again.')
-    } finally {
-      setLoadingPlan(null)
-    }
+  const handleUpgrade = (planId: string) => {
+    const billing = annual ? 'annual' : 'monthly'
+    const key = `${planId}_${billing}` as keyof typeof STRIPE_PAYMENT_LINKS
+    window.location.href = STRIPE_PAYMENT_LINKS[key]
   }
 
   return (
@@ -133,9 +92,8 @@ export function PricingCards() {
                   handleUpgrade(plan.id)
                 }
               }}
-              disabled={loadingPlan === plan.id}
             >
-              {loadingPlan === plan.id ? 'Loading...' : currentTier === plan.id ? '✓ Current Plan' : `Start ${plan.name}`}
+              {currentTier === plan.id ? '✓ Current Plan' : `Start ${plan.name}`}
             </button>
           </div>
         ))}
