@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PRICING_TIERS, STRIPE_PRICE_IDS, stripePromise } from '../../lib/stripe'
+import { PRICING_TIERS, STRIPE_PRICE_IDS } from '../../lib/stripe'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useAuthStore } from '../../store/authStore'
 
@@ -18,8 +18,6 @@ export function PricingCards() {
     }
     setLoadingPlan(planId)
     try {
-      const stripe = await stripePromise
-      if (!stripe) throw new Error('Stripe not loaded')
       const billing = annual ? 'annual' : 'monthly'
       const priceKey = `${planId}_${billing}` as keyof typeof STRIPE_PRICE_IDS
       const priceId = STRIPE_PRICE_IDS[priceKey]
@@ -45,8 +43,8 @@ export function PricingCards() {
       }
 
       const { sessionId } = await response.json()
-      const { error } = await stripe.redirectToCheckout({ sessionId })
-      if (error) throw error
+      // Redirect to Stripe hosted checkout
+      window.location.href = `https://checkout.stripe.com/pay/${sessionId}`
     } catch (err) {
       console.error('Checkout error:', err)
       alert('Failed to start checkout. Please try again.')
